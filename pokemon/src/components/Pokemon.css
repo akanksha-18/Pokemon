@@ -1,4 +1,4 @@
-* {
+  * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -8,6 +8,19 @@
     width: 100%;
     overflow-x: hidden;
   }
+  body {
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    overflow-x: hidden;
+  }
+
+  
+  .pokemon-app {
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+  }
   
   .header {
     background-color: #ef5350;
@@ -16,25 +29,12 @@
     padding: 20px 0;
     margin-bottom: 20px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    width: 100vw; 
-    position: relative;
-    left: 0;
-    right: 0;
+    width: 100%;
   }
-
+  
   .header h1 {
     margin: 0;
     font-size: 2.5rem;
-  }
-  
-
-  .container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 20px;
-    width: 100%;
-    padding: 0 20px;
-    box-sizing: border-box;
   }
   
   .controls {
@@ -46,7 +46,6 @@
     max-width: 600px;
     padding: 0 15px;
     width: 100%;
-    box-sizing: border-box;
   }
   
   #type-filter, #search-input {
@@ -64,16 +63,29 @@
     box-shadow: 0 0 0 2px rgba(239, 83, 80, 0.2);
   }
   
-  .loading {
+  .loading, .error-message, .no-results {
     text-align: center;
     padding: 20px;
     font-size: 18px;
-    color: #666;
     width: 100%;
-    grid-column: 1 / -1; 
   }
   
- 
+  .error-message {
+    color: #ef5350;
+  }
+  
+  .no-results {
+    color: #666;
+  }
+  
+  .container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    width: 100%;
+    padding: 0 20px;
+  }
+  
   .flip-card {
     background-color: transparent;
     width: 100%;
@@ -112,7 +124,6 @@
     flex-direction: column;
     align-items: center;
     padding: 20px;
-    box-sizing: border-box;
   }
   
   .pokemon-number {
@@ -148,6 +159,7 @@
     display: flex;
     gap: 8px;
     justify-content: center;
+    flex-wrap: wrap;
   }
   
   .type {
@@ -157,7 +169,6 @@
     text-transform: capitalize;
     color: white;
   }
-  
   
   .normal { background-color: #A8A878; }
   .fire { background-color: #F08030; }
@@ -186,7 +197,6 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    box-sizing: border-box;
   }
   
   .flip-card-back h3 {
@@ -255,26 +265,98 @@
     font-size: 16px;
     cursor: pointer;
     transition: background-color 0.3s;
-    grid-column: 1 / -1; 
   }
   
   #load-more-btn:hover {
     background-color: #e53935;
   }
   
-
+  /* Responsive design */
   @media (max-width: 768px) {
     .controls {
       flex-direction: column;
+      gap: 10px;
+    }
+    
+    #type-filter, #search-input {
+      width: 100%;
     }
     
     .container {
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 15px;
+    }
+    
+    .flip-card {
+      height: 320px;
+    }
+    
+    .flip-card-front img {
+      width: 120px;
+      height: 120px;
+    }
+    
+    .stat-name {
+      width: 70px;
+      font-size: 11px;
     }
   }
   
   @media (max-width: 480px) {
+    .header h1 {
+      font-size: 2rem;
+    }
+    
     .container {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      padding: 0 10px;
+    }
+    
+    .flip-card {
+      height: 280px;
+    }
+    
+    .flip-card-front {
+      padding: 10px;
+    }
+    
+    .flip-card-front img {
+      width: 100px;
+      height: 100px;
+      margin-top: 15px;
+    }
+    
+    .flip-card-front h3 {
+      font-size: 16px;
+      margin: 10px 0 5px;
+    }
+    
+    .pokemon-number {
+      font-size: 10px;
+      padding: 2px 6px;
+    }
+    
+    .type {
+      padding: 3px 8px;
+      font-size: 10px;
+    }
+    
+    .flip-card-back {
+      padding: 10px;
+    }
+    
+    .stat-name {
+      width: 60px;
+      font-size: 10px;
+    }
+    
+    .stat-value {
+      width: 25px;
+      font-size: 10px;
+    }
+    
+    .pokemon-info {
+      font-size: 11px;
     }
   }

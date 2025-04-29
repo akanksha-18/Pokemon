@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './Pokemon.css';
+import './pokemon.css'
 
 const PokemonApp = () => {
   const [pokemons, setPokemons] = useState([]);
@@ -7,35 +7,60 @@ const PokemonApp = () => {
   const [typeFilter, setTypeFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const limit = 150;
   
+
   useEffect(() => {
-    fetchTypes();
     loadMorePokemons();
   }, []);
   
-  const fetchTypes = async () => {
-    const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=20&offset=0');
-    const data = await response.json();
-    localStorage.setItem("Pokemons", JSON.stringify(data));
-  };
+ 
+  useEffect(() => {
+    setPokemons([]);
+    setOffset(0);
+    loadMorePokemons();
+  }, [typeFilter, searchQuery]);
   
   const fetchPokemons = async () => {
     setLoading(true);
-    const url = `https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`;
-    const response = await fetch(url);
-    const data = await response.json();
+    setError(null);
     
-    const pokemonDetails = await Promise.all(
-      data.results.map(pokemon => fetch(pokemon.url).then(res => res.json()))
-    );
+    try {
+      const url = `https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      
+      const pokemonPromises = data.results.map(pokemon => 
+        fetch(pokemon.url)
+          .then(res => {
+            if (!res.ok) throw new Error(`Error fetching ${pokemon.name}`);
+            return res.json();
+          })
+          .catch(error => {
+            console.error(`Failed to fetch ${pokemon.name}:`, error);
+            return null;
+          })
+      );
+      
+      const pokemonDetails = await Promise.all(pokemonPromises);
+      
     
-    setLoading(false);
-    return pokemonDetails.filter(pokemon => {
-      const matchesType = typeFilter ? pokemon.types.some(type => type.type.name === typeFilter) : true;
-      const matchesSearch = pokemon.name.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesType && matchesSearch;
-    });
+      return pokemonDetails
+        .filter(pokemon => pokemon !== null)
+        .filter(pokemon => {
+          const matchesType = typeFilter ? pokemon.types.some(type => type.type.name === typeFilter) : true;
+          const matchesSearch = pokemon.name.toLowerCase().includes(searchQuery.toLowerCase());
+          return matchesType && matchesSearch;
+        });
+    } catch (error) {
+      console.error('Error fetching Pokemon:', error);
+      setError('Failed to load Pokémon. Please try again later.');
+      return [];
+    } finally {
+      setLoading(false);
+    }
   };
   
   const loadMorePokemons = async () => {
@@ -46,33 +71,30 @@ const PokemonApp = () => {
 
   const handleTypeFilter = (e) => {
     setTypeFilter(e.target.value);
-    setOffset(0);
-    setPokemons([]);
   };
     
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
-    setOffset(0);
-    setPokemons([]);
   };
-    
-  useEffect(() => {
-    loadMorePokemons();
-  }, [typeFilter, searchQuery]);
-     
+
   return (
-    <div>
+    <div className="pokemon-app">
       <div className="header">
         <h1>Pokémon</h1>
       </div>
       
       <div className="controls">
-        <select id="type-filter" onChange={handleTypeFilter} value={typeFilter}>
+        <select 
+          id="type-filter" 
+          onChange={handleTypeFilter} 
+          value={typeFilter}
+        >
           <option value="">All Types</option>
-          {['normal', 'fire', 'water', 'grass',  'poison',  'flying',  'bug'].map(type => (
+          {['normal', 'fire', 'water', 'grass', 'poison', 'flying', 'bug', 'electric', 'ground', 'fairy', 'fighting', 'psychic', 'rock', 'steel', 'ice', 'ghost', 'dragon', 'dark'].map(type => (
             <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
           ))}
         </select>
+        
         <input
           type="text"
           id="search-input"
@@ -82,7 +104,23 @@ const PokemonApp = () => {
         />
       </div>
       
-      {loading && <div className="loading">Loading Pokémon...</div>}
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
+      
+      {loading && (
+        <div className="loading">
+          Loading Pokémon...
+        </div>
+      )}
+      
+      {!loading && pokemons.length === 0 && !error && (
+        <div className="no-results">
+          No Pokémon found. Try adjusting your filters.
+        </div>
+      )}
       
       <div className="container">
         {pokemons.map(pokemon => (
@@ -91,8 +129,14 @@ const PokemonApp = () => {
               <div className="flip-card-front">
                 <div className="pokemon-number">#{String(pokemon.id).padStart(3, '0')}</div>
                 <img 
-                  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
+                  src={pokemon.sprites.other['official-artwork'].front_default || 
+                       `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
                   alt={pokemon.name}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = pokemon.sprites.front_default || 
+                      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png";
+                  }}
                 />
                 <h3>{pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h3>
                 <div className="pokemon-types">
@@ -103,6 +147,7 @@ const PokemonApp = () => {
                   ))}
                 </div>
               </div>
+              
               <div className="flip-card-back">
                 <h3>{pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1)}</h3>
                 <div className="pokemon-stats">
@@ -132,7 +177,11 @@ const PokemonApp = () => {
         ))}
       </div>
       
-      <button id="load-more-btn" onClick={loadMorePokemons}>Load More</button>
+      <button id="load-more-btn" onClick={loadMorePokemons}>
+        Load More
+      </button>
+      
+     
     </div>
   );
 };
